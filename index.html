@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PORTAL TES KECERMATAN</title>
+    <style>
+        :root { --navy: #0b2340; --gold: #d4a017; --gray: #f1f5f9; }
+        body { font-family: 'Inter', sans-serif; background: #e2e8f0; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .login-card { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; border-top: 6px solid var(--navy); }
+        h1 { color: var(--navy); font-size: 20px; margin-bottom: 20px; text-transform: uppercase; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border: 2px solid #cbd5e1; border-radius: 8px; box-sizing: border-box; text-align: center; font-size: 16px; }
+        button { width: 100%; padding: 14px; background: var(--navy); color: var(--gold); border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 16px; transition: 0.3s; }
+        button:hover { opacity: 0.9; }
+        .menu-list { display: none; margin-top: 20px; text-align: left; }
+        .menu-item { display: block; padding: 15px; background: var(--gray); margin-bottom: 10px; border-radius: 8px; text-decoration: none; color: var(--navy); font-weight: bold; border-left: 4px solid var(--gold); transition: 0.2s; }
+        .menu-item:hover { background: #dbeafe; transform: translateX(5px); }
+        .error-msg { color: #c0392b; font-size: 13px; margin-top: 10px; display: none; }
+        .footer { margin-top: 20px; font-size: 11px; color: #64748b; }
+    </style>
+</head>
+<body>
+
+<div class="login-card">
+    <h1>TES KECERMATAN HURUF HILANG</h1>
+    
+    <div id="authBox">
+        <p style="font-size: 14px; color: #64748b;">Masukkan Password Akses</p>
+        <input type="password" id="passInput" placeholder="Password">
+        <button onclick="checkAuth()">MASUK</button>
+        <p id="errorTxt" class="error-msg"></p>
+    </div>
+
+    <div id="menuBox" class="menu-list">
+        <p style="font-size: 13px; color: #64748b; margin-bottom: 15px;">Pilih Level Ujian:</p>
+        <a href="huruf_mudah_1.html" class="menu-item">1. Level Mudah (A-Z Berurutan)</a>
+        <a href="huruf_adv_5.html" class="menu-item">2. Level Advanced (Huruf Acak)</a>
+        <button onclick="logout()" style="background:#64748b; color:white; margin-top:20px; font-size:12px; padding:8px;">LOGOUT</button>
+    </div>
+
+    <div class="footer">
+        Persona Research & Consulting
+    </div>
+</div>
+
+<script>
+    const CONFIG = {
+        pass: "06071202",
+        maxDevices: 3,
+        expiryDays: 7
+    };
+
+    // Simulasi Fingerprint Sederhana
+    const getDeviceId = () => {
+        return btoa(navigator.userAgent + navigator.language).substring(0, 16);
+    };
+
+    function checkAuth() {
+        const input = document.getElementById('passInput').value;
+        const errorTxt = document.getElementById('errorTxt');
+        
+        if (input !== CONFIG.pass) {
+            errorTxt.innerText = "Password salah!";
+            errorTxt.style.display = "block";
+            return;
+        }
+
+        // Ambil data device dari "Server" (Simulasi LocalStorage)
+        let data = JSON.parse(localStorage.getItem('persona_auth_data')) || { devices: [], expiry: null };
+        const currentId = getDeviceId();
+
+        // Cek apakah device sudah terdaftar
+        if (!data.devices.includes(currentId)) {
+            if (data.devices.length >= CONFIG.maxDevices) {
+                errorTxt.innerText = "Batas maksimal 3 perangkat tercapai!";
+                errorTxt.style.display = "block";
+                return;
+            }
+            data.devices.push(currentId);
+            
+            // Logika Expired: 7 hari setelah device ke-2 login
+            if (data.devices.length === 2) {
+                const expiryDate = new Date();
+                expiryDate.setDate(expiryDate.getDate() + CONFIG.expiryDays);
+                data.expiry = expiryDate.getTime();
+            }
+        }
+
+        // Cek masa berlaku
+        if (data.expiry && new Date().getTime() > data.expiry) {
+            errorTxt.innerText = "Masa akses menu ini telah habis (Expired).";
+            errorTxt.style.display = "block";
+            return;
+        }
+
+        localStorage.setItem('persona_auth_data', JSON.stringify(data));
+        sessionStorage.setItem('isLoggedIn', 'true');
+        showMenu();
+    }
+
+    function showMenu() {
+        document.getElementById('authBox').style.display = 'none';
+        document.getElementById('menuBox').style.display = 'block';
+    }
+
+    function logout() {
+        sessionStorage.removeItem('isLoggedIn');
+        location.reload();
+    }
+
+    // Auto-login jika sesi masih aktif
+    window.onload = () => {
+        if (sessionStorage.getItem('isLoggedIn') === 'true') {
+            showMenu();
+        }
+    };
+</script>
+
+</body>
+</html>
